@@ -1,6 +1,6 @@
 package com.chatbot.demo.controller;
 
-import com.chatbot.demo.utils.MarkdownHelper;
+import com.chatbot.demo.utils.ResponseFormatter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
@@ -40,9 +40,9 @@ class ChatController {
                 .call()
                 .content();
         log.debug("Response from AI: {}", response);
-        String markdownAnswer = formatResponse(prompt, response);
-        log.debug("Markdown formatted response: {}", markdownAnswer);
-        var htmlResponse = MarkdownHelper.toHTML(markdownAnswer);
+        String formattedAnswer = formatResponse(prompt, response);
+        log.debug("Formatted response: {}", formattedAnswer);
+        var htmlResponse = ResponseFormatter.toHtml(formattedAnswer);
         log.debug("HTML formatted response: {}", htmlResponse);
         return new Output(htmlResponse);
     }
@@ -70,13 +70,13 @@ class ChatController {
 
     private String formatResponse(Question prompt, String answer) {
         var systemPrompt = """
-                Following are the question and answer:
+                You are formatting an AI assistant response.
                 
                 Question: {question}
                 
                 Answer: {answer}
                 
-                Format the answer into plain human readable text and return only the formatted response.
+                Return a concise plain text answer. Use the first line with pipe (`|`) separators for table headers if structured data is required; subsequent lines, also pipe-separated, become table rows. For single values that do not require a table, return plain sentences without pipes.
                 """;
         return chatClient
                 .prompt()
