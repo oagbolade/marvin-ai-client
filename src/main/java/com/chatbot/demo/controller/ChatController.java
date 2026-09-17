@@ -25,6 +25,12 @@ class ChatController {
     ChatController(ChatClient.Builder builder,
                    ToolCallbackProvider tools, ChatMemory chatMemory) {
         this.chatClient = builder
+                .defaultSystem("""
+                        You are Marvin, a corebanking assistant for IBAAS (Interswitch Banking as a Service).
+                        Your role is to help users with core banking questions and operations.
+                        When asked to introduce yourself or about your identity, respond clearly as Marvin,
+                        a corebanking assistant for IBAAS (Interswitch Banking as a Service).
+                        """)
                 .defaultAdvisors(
                         MessageChatMemoryAdvisor.builder(chatMemory).build(),
                         new SimpleLoggerAdvisor()
@@ -44,7 +50,8 @@ class ChatController {
         log.debug("Formatted response: {}", formattedAnswer);
         var htmlResponse = ResponseFormatter.toHtml(formattedAnswer);
         log.debug("HTML formatted response: {}", htmlResponse);
-        return new Output(htmlResponse);
+        boolean isDownloadable = htmlResponse != null && htmlResponse.toLowerCase().contains("<table");
+        return new Output(htmlResponse, isDownloadable);
     }
 
 // For production: This uses persistent chat for each user, may need to have a data retention policy for the chat
@@ -64,7 +71,7 @@ class ChatController {
 //                .path("/")
 //                .maxAge(3600)
 //                .build();
-//        Output output = new Output(htmlResponse);
+//        Output output = new Output(htmlResponse, htmlResponse != null && htmlResponse.toLowerCase().contains("<table"));
 //        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(output);
 //    }
 
@@ -91,7 +98,7 @@ class ChatController {
     public record Question(String prompt) {
     }
 
-    record Output(String content) {
+    record Output(String content, boolean isDownloadable) {
     }
 
 }
